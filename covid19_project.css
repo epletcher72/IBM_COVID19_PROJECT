@@ -1,15 +1,30 @@
 #map {
-  height: 30%;
-  width: 50%
+  height: 40%;
+  width: 70%;
 }
 html,
 body {
+  background: var(--dark-blue);
+  font: 13px/1.4 Geneva, 'Lucida Sans', 'Lucida Grande', 'Lucida Sans Unicode', Verdana, sans-serif;
     height: 150%;
     margin: 0;
     padding: 0;
 }
-
-
+ #infoBox{
+  vertical-align: middle;
+  background-color: aquamarine;
+  position: relative;
+  width:20%;
+  height:10%;
+} 
+#info{
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
 
 [type="date"] {
   background:#fff url(https://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/calendar_2.png)  97% 50% no-repeat ;
@@ -24,11 +39,6 @@ body {
 
 /* custom styles */
 
-body {
-  padding: 4em;
-  background: #e5e5e5;
-  font: 13px/1.4 Geneva, 'Lucida Sans', 'Lucida Grande', 'Lucida Sans Unicode', Verdana, sans-serif;
-}
 label {
   display: block;
 }

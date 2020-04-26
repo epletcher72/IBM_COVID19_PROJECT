@@ -1,7 +1,6 @@
 var map;
 var tempData;
 var dataarr = [new Map(),1,1];
-var numqueries = 0;
 var popmap = new Map();
 
 function htmlsetup(){
@@ -16,7 +15,7 @@ function createPopMap(){
     }).done(function(json) {
       console.log("done")
       for(var i = 0; i<json["features"].length;i++){
-        popmap.set(json["features"][i].properties.GEO_ID,[json["features"][i].properties.population,json["features"][i].properties.CENSUSAREA, 1]);
+        popmap.set(parseInt(json["features"][i].properties.GEO_ID),[json["features"][i].properties.population,json["features"][i].properties.CENSUSAREA, 1,json["features"][i].properties.NAME]);
       }
       console.log(popmap)
     }); 
@@ -25,42 +24,8 @@ function createPopMap(){
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
       center: {lat: 40, lng: -95},
-      zoom: 3.6,
+      zoom: 4.3,
       disableDefaultUI: true,
-      styles: [
-  // {
-  // "featureType": "water",
-  // "elementType": "geometry",
-  // "stylers": [
-  //   { "visibility": "off" }
-  // ]
-  // },{
-  // "featureType": "road",
-  // "stylers": [
-  //   { "visibility": "off" }
-  // ]
-  // },{
-  // "featureType": "administrative",
-  // "stylers": [
-  //   { "visibility": "off" }
-  // ]
-  // },{
-  // "featureType": "poi",
-  // "stylers": [
-  //   { "visibility": "off" }
-  // ]
-  // },{
-  // "featureType": "administrative",
-  // "stylers": [
-  //   { "visibility": "off" }
-  // ]
-  // },{
-  // "elementType": "labels",
-  // "stylers": [
-  //   { "visibility": "off" }
-  // ]
-  // }
-]
     });
   }
 function toQueryInput(str){
@@ -104,7 +69,7 @@ var d = new Date(document.getElementById("date1").value).toISOString().slice(0,1
     //var query2 = "https://delphi.cmu.edu/epidata/api.php?source=covidcast&data_source=google-survey&signal=raw_cli&time_type=day&geo_type=county&time_values="+d+"&geo_value=*";
     var query3 = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
     //fetchDataEpidata(query1);
-    fetchDataNYT(query3,"cases");
+    fetchDataNYT(query3,d,"cases",0,1);
     //fetchDataEpidata(query2);
     
 }
@@ -123,7 +88,7 @@ function fetchDataEpidata(query) {
 drawCounties(map);
     }); 
 }
-function fetchDataNYT(query,d,type) {
+function fetchDataNYT(query,d,type,n1,n2) {
     $.ajax({
         url: query,
         type: "GET",
@@ -134,7 +99,7 @@ function fetchDataNYT(query,d,type) {
         tempData = data;
         var data1 = csvJSON(data,d);
         console.log(data1)
-        createMapNYT(data1,type);
+        createMapNYT(data1,type,n1,n2);
 drawCounties(map);
     }); 
 }
@@ -142,19 +107,15 @@ function drawCounties(map) {
     map.data.loadGeoJson("console.json");
     var map1 = dataarr[0];
     var county;
-    console.log(map.data)
+    console.log(dataarr)
     map.data.setStyle(function(feature) {
-
+      
       county = parseInt(feature.getProperty("GEO_ID"));
-      pop = feature.getProperty("population");
-      console.log(pop)
-      console.log(county)
-      if(map1.get(county)){
-        
+      if(map1.has(county)){
             return ({
-                fillColor: toHSL(map1.get(county)/feature.getProperty("population"), dataarr[1]/103554,dataarr[2]/1356924, 100, 50),
+                fillColor: toHSL(map1.get(county)[0], dataarr[1],dataarr[2], 100, 50),
                 strokeColor: "#000000",
-                strokeWeight: 2
+                strokeWeight: 0.1
             });
         } else {
             return ({
@@ -165,19 +126,18 @@ function drawCounties(map) {
         }
     });
 
-    // map.data.addListener('mouseover', function(event) {
-    //     var index = zipTotalBundle[0].indexOf(event.feature.getProperty("ZCTA5CE10"));
-    //     map.data.revertStyle();
-    //     map.data.overrideStyle(event.feature, {
-    //         strokeWeight: 6
-    //     });
-    //     document.getElementById("info-paragraph").innerHTML = "Zipcode: " + event.feature.getProperty("ZCTA5CE10") + "<br>Incidents: " + zipTotalBundle[1][index] + "<br>Population: " + event.feature.getProperty("population")
-    // });
+    map.data.addListener('mouseover', function(event) {
+        map.data.revertStyle();
+        map.data.overrideStyle(event.feature, {
+            strokeWeight: 2
+        });
+        document.getElementById("infoBox").innerHTML = dataarr[0].get(parseInt(event.feature.getProperty("GEO_ID")))[1]
+    });
 
-    // map.data.addListener('mouseout', function(event) {
-    //     map.data.revertStyle();
-    //     document.getElementById("info-paragraph").innerHTML = "Mouse over the regions for more information."
-    // });
+    map.data.addListener('mouseout', function(event) {
+        map.data.revertStyle();
+        document.getElementById("infoBox").innerHTML = "Mouse over the regions for more information.";
+    });
 }
 
 function clearDataLayer(map) {
@@ -210,17 +170,28 @@ function createMap(arr){
   }
   dataarr= [dataarr[0],minv,maxv];
 }
-function createMapNYT(arr,type){
+function createMapNYT(arr,type,n1,n2){
   console.log(arr)
+  var startval;
+  var aug;
+  var county;
+  county = parseInt(arr[0]["fips"]);
   if(type == "deaths"){
-  var newDataArr = [new Map(),parseInt(arr[0]["deaths"]),parseInt(arr[0]["deaths"])]
+    startval = parseInt(arr[0]["deaths"]);
   }
-  else var newDataArr = [new Map(),parseInt(arr[0]["cases"]),parseInt(arr[0]["cases"])]
+  else startval = parseInt(arr[0]["cases"]);
+  startval /= (popmap.get(county)[n1]/popmap.get(county)[n2]);
+  var newDataArr = [new Map(),startval,startval];
   for(var i = 0; i < arr.length;i++){
-    var v1 = parseInt(arr[i]["fips"]);
+      county = parseInt(arr[i]["fips"]);
+      if(popmap.has(county)){
+    aug = popmap.get(county)[n1]/popmap.get(county)[n2];
+    console.log(n2)
+    var v1 = county;
     if(type == "deaths"){
-    var v2 = parseInt(arr[i]["deaths"]);}
-    else var v2 = parseInt(arr[i]["cases"]);
+    var v2 = parseInt(arr[i]["deaths"])/aug;
+  }
+    else var v2 = parseInt(arr[i]["cases"])/aug;
     if(!newDataArr[0].get(v1)){
       if (v2 > newDataArr[2]) {
         newDataArr[2] = v2;
@@ -228,8 +199,11 @@ function createMapNYT(arr,type){
       if (v2 < newDataArr[1]) {
         newDataArr[1] = v2;
         console.log(v1)}
-
-      newDataArr[0].set(v1,v2)
+        var str = '<p1 id="info">'+popmap.get(county)[3] + '</p1><p1 id="info">Population: ' + popmap.get(county)[0] + '</p1><p1 id="info">Area: ' + popmap.get(county)[1] +'</p1>';
+        if(type == "deaths") str +=  'Deaths: ' + parseInt(arr[i]["deaths"]);
+        else str += 'Cases:' + parseInt(arr[i]["Cases"]);
+      newDataArr[0].set(v1,[v2,str])
+    }
     }
   }
   dataarr= newDataArr;
