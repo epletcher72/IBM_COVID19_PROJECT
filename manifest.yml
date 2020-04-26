@@ -1,7 +1,0 @@
----
-applications:
-- buildpack: https://github.com/cloudfoundry/staticfile-buildpack.git
-  host: covid19DataProject
-  name: covid19DataProject
-  memory: 2000M
-  stack: cflinuxfs2

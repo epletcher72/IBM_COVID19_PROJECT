@@ -6,11 +6,21 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="covid19_project.css">
     <script src="covid19_project.js"></script>
-    
-  </head>
-  <body>
-    <div id="map"></div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <!-- Maps -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8zsQ7172noI_WuE_Gbd74iKuH-Xv2LJw&callback=initMap"
     async defer></script>
+    
+  </head>
+  <body onload="htmlsetup()">
+    <div id="map"></div>
+    <label for="date1">From:</label>
+    <input type="date" name="date1" id="date1">
+   
+    <button type="button" onclick="submitButtonPressed()">Submit</button>
+   
+      
+    
   </body>
 </html>
